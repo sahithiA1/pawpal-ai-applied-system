@@ -1,46 +1,128 @@
-# PawPal+ (Module 2 Project)
+# 🐾 PawPilot AI — Intelligent Pet Care & Scheduling Assistant
+**Your pet's care, intelligently guided.**
 
-**PawPal+** is a Streamlit app that helps a pet owner plan daily care tasks for their pets. It was built for the CodePath AI110 Module 2 project. The scheduling logic lives in a tested Python backend (`pawpal_system.py`), and the Streamlit interface (`app.py`) is fully connected to it: you can add pets and tasks, generate a daily schedule, see conflict warnings, filter and sort tasks, and complete tasks that repeat daily or weekly.
+PawPilot AI is an evolving intelligent pet-care scheduling assistant designed to help busy pet owners organize daily responsibilities, manage multiple pets, identify scheduling conflicts, and make informed care decisions.
 
-## Scenario
+This project extends **PawPal+**, originally developed for **CodePath AI110 Module 2**. PawPal+ is a Streamlit application that allows owners to register pets, create care tasks, generate priority-based daily schedules, detect overlapping activities, and manage recurring tasks. Its scheduling logic is implemented in Python and supported by automated tests.
 
-A busy pet owner needs help staying consistent with pet care. They want an assistant that can:
+The CodePath final project builds on this foundation with a proposed AI-assisted scheduling workflow that incorporates pet-care knowledge, scheduling recommendations, conflict evaluation, and human review before accepting proposed changes.
 
-- Track pet care tasks (walks, feeding, meds, enrichment, grooming, etc.)
-- Consider constraints (time available, priority, owner preferences)
-- Produce a daily plan and explain why it chose that plan
+The goal is to develop a more intelligent, reliable, and user-centered pet-care assistant while maintaining transparency and owner control over scheduling decisions.
 
-The project was built by designing the system first (UML), then implementing the logic in Python, then connecting it to the Streamlit UI.
+## Scenario: Why PawPilot AI?
+
+Managing daily care for multiple pets can become challenging, especially when feeding schedules, walks, medications, grooming, and other responsibilities compete for limited time.
+
+Pet owners need more than a simple task list. They benefit from a system that can organize responsibilities, recognize scheduling conflicts, consider priorities, and help them make informed decisions.
+
+**PawPilot AI** aims to address these challenges by building on the original PawPal+ scheduling application.
+
+### The Problem
+
+A busy pet owner may need to:
+- Manage daily responsibilities for multiple pets.
+- Balance high-priority care tasks with limited available time.
+- Identify overlapping activities and scheduling conflicts.
+- Keep track of recurring tasks such as feeding and medication.
+- Understand why certain tasks are recommended or skipped.
+
+### My Approach
+The original **PawPal+** application provides task management, priority-based scheduling, recurring tasks, and conflict warnings using Python scheduling logic.
+
+**PawPilot AI** extends this foundation toward an AI-assisted workflow designed to:
+
+- Retrieve relevant pet profiles, existing tasks, and pet-care information.
+- Generate scheduling recommendations based on user constraints.
+- Evaluate recommendations for conflicts and scheduling errors.
+- Allow the owner to review proposed changes before approval.
+- Record scheduling decisions to support transparency and testing.
+
+The objective is to combine reliable scheduling logic with AI-assisted recommendations while keeping pet owners in control of final decisions.
 
 ## What you will build
+PawPilot AI builds on the original PawPal+ application by combining existing pet-care scheduling features with a proposed AI-assisted decision-making workflow.
 
-The assignment asks for an app that can:
+### Existing Features from PawPal+
 
-- Let a user enter basic owner + pet info
-- Let a user add/edit tasks (duration + priority at minimum)
-- Generate a daily schedule/plan based on constraints and priorities
-- Display the plan clearly (and ideally explain the reasoning)
-- Include tests for the most important scheduling behaviors
+The original application already supports:
 
-PawPal+ covers these, with one limit: tasks can be added and marked complete in the app, but not edited or deleted after they are created.
+- Creating and managing pet profiles and care tasks.
+- Generating daily schedules based on task priorities and available time.
+- Detecting overlapping tasks and displaying conflict warnings.
+- Managing recurring daily and weekly tasks.
+- Filtering tasks by pet and completion status.
+- Displaying schedules through an interactive Streamlit interface.
+
+### Planned AI Enhancements
+
+The final project aims to introduce:
+
+- **Context-Aware Recommendations:** Use pet profiles, existing tasks, and relevant pet-care information to inform scheduling suggestions.
+- **AI Scheduling Agent:** Generate recommendations based on priorities, time constraints, and scheduling preferences.
+- **Conflict Evaluation:** Check AI-generated recommendations for overlapping tasks and other scheduling issues.
+- **Human-in-the-Loop Approval:** Allow pet owners to review and approve or reject proposed scheduling changes.
+- **Decision Logging:** Record recommendations and evaluation outcomes to make the workflow easier to understand and debug.
+- **Reliability Testing:** Test the AI workflow using realistic scheduling scenarios, including conflicts and invalid inputs.
+
+### Project Objective
+
+My goal is to develop a reliable and understandable AI-assisted scheduling system that helps pet owners organize daily care while keeping them in control of important decisions.
+
+The existing Python scheduling backend provides a foundation for validating and evaluating AI-generated recommendations.
 
 ## Getting started
 
 ### Setup
 
+**Prerequisites:**
+- Python 3.12 or newer
+- Git
+- A terminal (macOS, Linux, or Windows)
+
+**1. Clone the repository**
+
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+git clone https://github.com/sahithiA1/pawpal-ai-applied-system.git
+cd pawpal-ai-applied-system
 ```
 
-### Run the Streamlit app
+**2. Create a virtual environment**
+
+```bash
+python3 -m venv .venv
+```
+
+**3. Activate the virtual environment**
+
+For macOS or Linux:
+
+```bash
+source .venv/bin/activate
+```
+
+For Windows PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+**4. Install the required dependencies**
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+**5. Launch the application**
 
 ```bash
 streamlit run app.py
 ```
 
-Streamlit opens the app in your browser (usually at http://localhost:8501). Pets and tasks are kept while the app is open, but they are not saved to a file, so refreshing the page starts over.
+Streamlit will display a local URL, usually `http://localhost:8501`, where you can interact with the application.
+
+**Note:** These instructions launch the existing PawPal+ scheduling functionality. Additional setup requirements for PawPilot AI features will be documented as those features are implemented and tested.
+
+Pets and tasks are kept while the app is open, but they are not saved to a file, so refreshing the page starts over.
 
 ### Run the CLI demo
 
@@ -342,10 +424,117 @@ This walkthrough follows one owner from adding a pet to completing a recurring t
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
 
-## PawPal AI System Architecture
+## PawPilot AI System Architecture
 
-The diagram below illustrates the proposed PawPal AI workflow, including pet data retrieval, AI scheduling, conflict detection, human approval, and reliability testing.
+The diagram below illustrates the proposed PawPilot AI workflow, including pet data retrieval, AI scheduling, conflict detection, human approval, and reliability testing.
 
-![PawPal AI System Architecture](assets/architecture.png)
+![PawPilot AI System Architecture](assets/architecture.png)
 
 The editable Mermaid source is available in [diagrams/architecture.mmd](diagrams/architecture.mmd).
+
+## AI Sample Interactions
+
+This section will document real examples of PawPilot AI's intelligent scheduling workflow once the AI functionality has been implemented and tested.
+
+The final documentation will include at least three examples:
+
+1. **Personalized Scheduling:** An owner requests a daily care schedule for multiple pets with limited available time.
+2. **Conflict Resolution:** The AI identifies overlapping pet-care activities and recommends an adjusted schedule.
+3. **Human Approval:** An owner reviews an AI-generated recommendation and chooses whether to approve or request changes.
+
+Each example will include the user's input, the AI-generated response, and the outcome of the scheduling evaluation.
+
+**Implementation status:** These examples are planned and will be replaced with actual tested interactions before final submission.
+
+## Design Decisions and Trade-offs
+
+PawPilot AI builds on the original PawPal+ application, which uses a Python scheduling backend and a Streamlit user interface. I chose to extend this existing foundation rather than rebuild the application from scratch because it already provides tested scheduling logic, task management, and conflict detection.
+
+### Key Design Decisions
+
+**1. Separating the backend from the user interface**
+
+I kept the scheduling logic in `pawpal_system.py` and the user interface in `app.py`. This separation makes the system easier to test, maintain, and extend with AI capabilities.
+
+**2. Building on existing scheduling logic**
+
+The original scheduler already considers task priorities, available time, and recurring activities. Reusing this functionality provides a foundation for evaluating future AI-generated scheduling recommendations.
+
+**3. Keeping humans involved in scheduling decisions**
+
+The proposed AI workflow includes an approval checkpoint before accepting recommended schedule changes. This design aims to keep pet owners in control rather than allowing an AI agent to make changes automatically.
+
+**4. Evaluating recommendations for conflicts**
+
+I designed the architecture to evaluate proposed schedules for overlapping activities and scheduling errors. This builds on the existing conflict-detection functionality and provides a way to check AI recommendations before presenting them for approval.
+
+**5. Supporting transparency and testing**
+
+The proposed workflow includes decision logging and reliability testing. These components are intended to help explain scheduling recommendations, identify errors, and evaluate the system's behavior across different scenarios.
+
+### Trade-offs and Limitations
+
+- **Streamlit vs. a custom frontend:** Streamlit makes development and testing faster, but provides less flexibility for complex user interfaces.
+- **Existing scheduler vs. a complete redesign:** Reusing the original scheduler reduces implementation complexity, but some limitations remain, including tasks that cross midnight.
+- **AI recommendations vs. automatic scheduling changes:** Requiring human approval adds an extra step but helps prevent unwanted schedule modifications.
+- **In-memory storage vs. persistent storage:** The existing application keeps data in Streamlit session state rather than a database, making setup simpler but limiting long-term data persistence.
+- **AI flexibility vs. predictable behavior:** AI-assisted recommendations may offer greater flexibility than fixed scheduling rules, but require additional validation and testing to establish reliability.
+
+These decisions reflect my goal of developing an understandable and maintainable AI-assisted scheduling system while preserving the functionality already established in PawPal+.
+
+## Testing Summary and Lessons Learned
+
+### Existing Test Results
+
+The original PawPal+ scheduling backend has **38 automated tests**, all of which passed during the latest local test run.
+
+The tests cover:
+
+- Task creation, completion, and validation.
+- Daily scheduling based on priority and available time.
+- Detection of overlapping and conflicting tasks.
+- Daily and weekly recurring tasks.
+- Task filtering and chronological sorting.
+- Edge cases, including empty schedules and invalid inputs.
+
+The Streamlit interface was also checked during the original project's development using Streamlit's `AppTest` tool.
+
+### What Worked
+
+The existing Python backend successfully generates daily schedules, respects available-time limits, identifies overlapping activities, and handles recurring tasks.
+
+Keeping the scheduling logic separate from the Streamlit interface has also made it easier to test individual components.
+
+### Current Limitations
+
+- Tasks that cross midnight are not currently checked for scheduling conflicts.
+- Pet and task data are stored in memory rather than persisted in a database.
+- The existing scheduler detects conflicts but does not automatically resolve them.
+- Automated Streamlit UI tests are not included in the saved test suite.
+
+### Planned AI Reliability Testing
+
+Once the PawPilot AI features are implemented, I plan to evaluate:
+
+- Whether AI recommendations respect scheduling constraints.
+- Whether conflicts and invalid recommendations are detected.
+- Whether proposed changes require owner approval before being saved.
+- How the system handles incomplete information and unusual scheduling requests.
+- Whether repeated or similar inputs produce reasonable recommendations.
+
+### Lessons Learned
+
+Building and testing PawPal+ demonstrated the importance of separating application logic from the user interface, validating user input, and testing edge cases.
+
+The PawPilot AI extension will build on these lessons by evaluating how AI-generated recommendations can be combined with deterministic scheduling checks and human oversight.
+
+**Testing status:** The 38 existing backend tests pass. AI-specific functionality and reliability tests are still pending implementation.
+
+## Project Reflection
+Developing PawPal+ taught me the importance of breaking complex problems into smaller, manageable components. By separating scheduling logic from the user interface and writing automated tests, I learned how to build a system that is easier to understand, maintain, and improve.
+
+As I extend the project into PawPilot AI, I am exploring how artificial intelligence can support decision-making rather than simply automate tasks. One important design principle is that AI-generated recommendations should be evaluated against clear constraints before they are presented to users.
+
+This project has also helped me recognize that reliable AI systems require more than generating responses. They need validation, meaningful testing, transparency, and human oversight.
+
+My goal with PawPilot AI is to apply these principles to a practical pet-care scheduling assistant while continuing to improve my understanding of AI-assisted software development.
