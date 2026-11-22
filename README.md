@@ -53,9 +53,16 @@ The original application already supports:
 - Filtering tasks by pet and completion status.
 - Displaying schedules through an interactive Streamlit interface.
 
+### Implemented AI Feature: Priority Recommender
+
+- **Machine-learning priority suggestions:** When an owner fills in a task, a small Naive Bayes model trained on synthetic examples suggests `low`, `medium`, or `high` priority, with its confidence and the main reasons.
+- **Owner approval or rejection:** The suggestion never changes anything on its own. The owner clicks **Approve** to use it or **Reject** to keep their own choice, and every decision is logged in the app.
+
+See [PawPilot AI Priority Recommender](#pawpilot-ai-priority-recommender) for details and evaluation results.
+
 ### Planned AI Enhancements
 
-The final project aims to introduce:
+The other AI features below are still planned and not implemented:
 
 - **Context-Aware Recommendations:** Use pet profiles, existing tasks, and relevant pet-care information to inform scheduling suggestions.
 - **AI Scheduling Agent:** Generate recommendations based on priorities, time constraints, and scheduling preferences.
@@ -120,7 +127,7 @@ streamlit run app.py
 
 Streamlit will display a local URL, usually `http://localhost:8501`, where you can interact with the application.
 
-**Note:** These instructions launch the existing PawPal+ scheduling functionality. Additional setup requirements for PawPilot AI features will be documented as those features are implemented and tested.
+**Note:** The app includes the PawPilot AI priority recommender. It uses only Python's standard library and a CSV file in `data/`, so it needs no extra installation, API key, or internet connection. The model is trained when the app starts.
 
 Pets and tasks are kept while the app is open, but they are not saved to a file, so refreshing the page starts over.
 
@@ -175,6 +182,8 @@ Choose a pet and fill in the task form:
 | Scheduled time | Optional: tick **Set a specific time** and pick a time; otherwise the task has no set time |
 
 New tasks are due today. Adding the same task for the same pet at the same time twice shows a warning instead of creating a duplicate.
+
+Below the form, the **🤖 PawPilot AI priority suggestion** panel suggests a priority for the task you're entering, with its confidence and reasons. Click **Approve** to set the Priority field to the suggestion, or **Reject** to keep your own choice. Each decision is listed under **Suggestion history**. See [PawPilot AI Priority Recommender](#pawpilot-ai-priority-recommender).
 
 ### All Tasks
 
@@ -434,17 +443,22 @@ The editable Mermaid source is available in [diagrams/architecture.mmd](diagrams
 
 ## AI Sample Interactions
 
-This section will document real examples of PawPilot AI's intelligent scheduling workflow once the AI functionality has been implemented and tested.
+These are actual outputs from the priority recommender trained on the bundled dataset. None of these titles appear in the training data. They can be reproduced with `model.recommend(...)` from `pawpilot_ml.py`, and the approve/reject flows are covered by `tests/test_app_priority_suggestion.py`.
 
-The final documentation will include at least three examples:
+| Task input (title · category · minutes · species · time) | Suggestion | Confidence | Reasons shown | Comment |
+|---|---|---:|---|---|
+| Insulin injection · meds · 5 · cat · morning | **high** | 99% | the word 'insulin', the word 'injection', category 'meds' | Correct |
+| Walk to the park · walk · 30 · dog · morning | **medium** | 99% | the word 'walk', category 'walk', the word 'park' | Correct |
+| Bathe and brush · grooming · 40 · dog · afternoon | **low** | 85% | category 'grooming', long duration, species 'dog' | Correct |
+| Treat hot spot on paw · grooming · 10 · dog · any | **low** | 80% | preferred time 'any', category 'grooming', the word 'treat' | ❌ **Wrong.** A hot spot is a skin condition. "Treat" mostly appears in snack examples ("Give a treat") in the training data |
+| Zorblax · other · 10 · dog · any | **low** | 65% | preferred time 'any', category 'other', species 'dog' | No title words recognised, so the app shows a "check it carefully" warning |
 
-1. **Personalized Scheduling:** An owner requests a daily care schedule for multiple pets with limited available time.
-2. **Conflict Resolution:** The AI identifies overlapping pet-care activities and recommends an adjusted schedule.
-3. **Human Approval:** An owner reviews an AI-generated recommendation and chooses whether to approve or request changes.
+**Human approval in the app:**
 
-Each example will include the user's input, the AI-generated response, and the outcome of the scheduling evaluation.
+1. **Approve:** The owner enters "Insulin injection" (meds) with priority set to `low`. The app suggests **high**. The owner clicks **Approve**, the priority dropdown changes to `high`, and the history shows *Suggested high → Approved → Priority used: high*.
+2. **Reject:** For the same task with priority set to `medium`, the owner clicks **Reject**. The dropdown stays `medium`, and the task is added with `medium` priority.
 
-**Implementation status:** These examples are planned and will be replaced with actual tested interactions before final submission.
+The wrong "hot spot" suggestion shows why the approval step matters. The model can be confidently wrong, so the owner always makes the final call.
 
 ## Design Decisions and Trade-offs
 
@@ -510,11 +524,11 @@ Keeping the scheduling logic separate from the Streamlit interface has also made
 - Tasks that cross midnight are not currently checked for scheduling conflicts.
 - Pet and task data are stored in memory rather than persisted in a database.
 - The existing scheduler detects conflicts but does not automatically resolve them.
-- Automated Streamlit UI tests are not included in the saved test suite.
+- Automated Streamlit UI tests cover only the priority-suggestion flow (`tests/test_app_priority_suggestion.py`). The rest of the app is not covered.
 
 ### Planned AI Reliability Testing
 
-Once the PawPilot AI features are implemented, I plan to evaluate:
+The priority recommender is now tested (see [PawPilot AI Priority Recommender](#pawpilot-ai-priority-recommender)). For the AI features that are still planned, I intend to evaluate:
 
 - Whether AI recommendations respect scheduling constraints.
 - Whether conflicts and invalid recommendations are detected.
@@ -528,19 +542,19 @@ Building and testing PawPal+ demonstrated the importance of separating applicati
 
 The PawPilot AI extension will build on these lessons by evaluating how AI-generated recommendations can be combined with deterministic scheduling checks and human oversight.
 
-**Testing status:** The 38 existing backend tests pass. AI-specific functionality and reliability tests are still pending implementation.
+**Testing status:** The full suite has 297 passing tests and 3 expected failures (known scheduler gaps). This includes 34 AI-specific tests for the priority recommender (29 unit tests and 5 Streamlit app tests). The AI features that are still planned have no tests yet.
 
 ## Reliability Evaluation
 
-> **Scope: this evaluates the existing rule-based PawPal+ scheduler (`pawpal_system.py`) only. It is not an AI evaluation.** PawPilot AI's AI features (AI recommendations, AI conflict review, owner approval of AI suggestions) are not implemented yet, so there are no AI results to report.
+> **Scope: this section evaluates the existing rule-based PawPal+ scheduler (`pawpal_system.py`). It is not an AI evaluation.** The evaluation of the machine-learning priority recommender is in [PawPilot AI Priority Recommender](#pawpilot-ai-priority-recommender). Other planned AI features (AI scheduling agent, AI conflict review) are not implemented, so there are no results for them.
 
 ### Scheduler reliability vs. AI reliability
 
-| | Existing scheduler (rule-based) | PawPilot AI features |
-|---|---|---|
-| Implemented? | Yes, in `pawpal_system.py` | No, only planned (see architecture diagram) |
-| Reliability tests | `tests/test_pawpal.py` (38 original tests) and `tests/test_reliability.py` (228 new tests) | None |
-| Results | 263 passed, 3 known gaps (xfail), 0 unexpected failures | Not evaluated, nothing to test yet |
+| | Existing scheduler (rule-based) | AI priority recommender (ML) | Other planned AI features |
+|---|---|---|---|
+| Implemented? | Yes, in `pawpal_system.py` | Yes, in `pawpilot_ml.py` and `app.py` | No, only planned (see architecture diagram) |
+| Tests | `tests/test_pawpal.py` (38) and `tests/test_reliability.py` (228) | `tests/test_priority_recommender.py` (29) and `tests/test_app_priority_suggestion.py` (5) | None |
+| Results | 263 passed, 3 known gaps (xfail), 0 unexpected failures | 34 passed. Held-out accuracy 76.7% (23/30) | Not evaluated, nothing to test yet |
 
 ### Evaluation results (`tests/test_reliability.py`)
 
@@ -555,14 +569,14 @@ The evaluation runs scenario-level checks on realistic multi-pet days. Known wea
 | Empty task lists | Pets with no tasks, all tasks completed, only future tasks, and filtering/sorting empty lists all give empty results without errors. | 4 | 4 | 0 | ✅ Pass |
 | **Total (new evaluation)** | | **228** | **225** | **3** | **0 unexpected failures** |
 
-**Full suite (latest local run, Python 3.14.2, pytest 9.2.0, project `.venv`):**
+**Scheduler tests only (latest local run, Python 3.14.2, pytest 9.2.0, project `.venv`):**
 
 ```text
-$ python -m pytest -q
-263 passed, 3 xfailed in 0.60s
+$ python -m pytest tests/test_pawpal.py tests/test_reliability.py -q
+263 passed, 3 xfailed
 ```
 
-These 263 passing tests are the 38 original backend tests plus the 225 passing evaluation tests. None of them test AI behaviour.
+These 263 passing tests are the 38 original backend tests plus the 225 passing evaluation tests. None of them test AI behaviour. With the 34 AI tests included, the full suite is **297 passed, 3 xfailed** (see below).
 
 ### Known gaps found by the evaluation
 
@@ -579,7 +593,7 @@ From the project folder, with the project's virtual environment (pytest is insta
 ```bash
 source .venv/bin/activate
 
-# Full suite: original 38 tests + reliability evaluation
+# Full suite: original 38 tests + scheduler reliability evaluation + AI recommender tests
 python -m pytest -q
 
 # Reliability evaluation only, listing the known gaps
@@ -593,11 +607,81 @@ The 200 random scenarios use fixed seeds (`random.Random(seed)` for seeds 0–19
 
 ### Limitations of this evaluation
 
-- **No AI is evaluated.** None of these results say anything about how reliable PawPilot AI's planned AI recommendations will be. AI reliability tests will be added once that functionality exists.
-- **Backend only.** The Streamlit app (`app.py`) is not covered by automated tests. Its input widgets already block some invalid values (for example duration ≥ 1), but nothing tests that automatically.
+- **No AI is evaluated in this section.** These results are about the rule-based scheduler only. The priority recommender is evaluated separately below, and the AI features that are still planned have no tests.
+- **Backend only.** Apart from the priority-suggestion flow, the Streamlit app (`app.py`) is not covered by automated tests. Its input widgets already block some invalid values (for example duration ≥ 1), but nothing tests that automatically.
 - **Results depend on today's date.** Tasks default to `date.today()`, so results could in principle differ on a different day or across midnight. No test is known to depend on the specific date.
 - **Not covered:** non-integer durations (a string duration raises `TypeError` while the plan is being built, not when the task is created) and `time=None` (accepted at creation). Both were seen during manual checks but are not part of the test suite.
 - **Random scenarios check rules, not quality.** They confirm the scheduler's rules always hold, not that the plan is the best possible one. The scheduler is greedy by priority, so it can leave time unused that a different choice of tasks would have filled.
+
+## PawPilot AI Priority Recommender
+
+PawPilot AI's first implemented AI feature is a **machine-learning model that suggests a task's priority**. It is written with Python's standard library only (`csv`, `math`, `random`, `re`, `collections`). It uses no external API, no extra packages, and no internet connection.
+
+### How it works
+
+1. **Training data:** [`data/priority_training_data.csv`](data/priority_training_data.csv) holds **120 synthetic, hand-written example tasks**, 40 each labelled `high`, `medium`, and `low`. The labelling rules and the data's limitations are documented in [`data/README.md`](data/README.md). It is not real user or veterinary data.
+2. **Features:** Each task becomes a list of features: the words in its title (lowercased, without common stopwords, plural "s" removed), plus its category, species, preferred time, and a duration bucket (short ≤ 10 min, medium 11–30, long > 30).
+3. **Model:** A **multinomial Naive Bayes** classifier with Laplace smoothing (`PriorityRecommender` in [`pawpilot_ml.py`](pawpilot_ml.py)). It learns how often each feature appears with each priority and combines that evidence into a probability for `low`, `medium`, and `high`. Features it has never seen are ignored.
+4. **Output:** The suggested priority, its probability (shown as confidence), and up to three features that most favoured it. The output also flags when confidence is below 60%, or when none of the title words were seen in training.
+5. **Owner decision:** `review_recommendation()` turns the owner's choice into the priority to use. **Approve** adopts the suggestion, and **Reject** keeps the owner's current choice. The recommender never edits a task by itself.
+
+### In the Streamlit app
+
+Under **Tasks**, the **🤖 PawPilot AI priority suggestion** panel updates as the owner fills in the task form. It shows:
+
+- the suggestion, confidence, and reasons,
+- a warning when the title isn't recognised or confidence is low, and a note that this is not veterinary advice,
+- **Approve (*priority*)**, which sets the Priority dropdown to the suggestion,
+- **Reject (keep my choice)**, which leaves the dropdown unchanged,
+- a **Suggestion history** table logging each decision: task, suggestion, confidence, previous choice, decision, and priority used.
+
+The existing scheduler is unchanged. It schedules whatever priority the task ends up with when the owner clicks **Add task**.
+
+### Evaluation results
+
+Measured on the bundled dataset (reproduce with `python -m pawpilot_ml`):
+
+| Measure | Result |
+|---|---|
+| Held-out test set (fixed stratified split, seed 110: 90 train / 30 test) | **23/30 correct = 76.7%** |
+| Majority-class baseline on the same split | 33.3% |
+| Leave-one-out accuracy (all 120 examples) | **82/120 = 68.3%** |
+
+Confusion matrix on the held-out split (rows = actual label, columns = prediction):
+
+| actual \ predicted | low | medium | high |
+|---|---:|---:|---:|
+| **low** | 9 | 1 | 0 |
+| **medium** | 3 | 6 | 1 |
+| **high** | 1 | 1 | 8 |
+
+The 7 held-out mistakes were: *Agility practice for fun* (low → predicted medium), *Clean ears routine* (medium → low), *Brush teeth* (medium → low), *Change aquarium water* (medium → low), *Refill hay rack* (medium → high), *Monitor breathing after surgery* (high → medium), and *Treat hot spot* (high → low). The last two matter most, because they are health tasks ranked too low.
+
+### AI test results
+
+| Test file | What it checks | Tests | Passed |
+|---|---|---:|---:|
+| `tests/test_priority_recommender.py` | Training data is balanced and well-formed. Tokenizing and features are correct. Clear unseen tasks get sensible priorities. Probabilities sum to 1. Reasons are given. Training is deterministic. Unrecognised and empty titles are flagged. The measured accuracy above is checked as a regression guard. Invalid durations (`0`, `-10`, `"10"`, `2.5`, `True`) are rejected. An untrained model, empty data, and bad labels are rejected. Unknown categories and species don't crash. Approve adopts the suggestion and Reject keeps the owner's choice. Recommending never changes a task. An approved priority changes what the existing scheduler keeps. | 29 | 29 |
+| `tests/test_app_priority_suggestion.py` | Runs the real Streamlit app with `AppTest`: the suggestion is shown without changing the priority. Approve sets the dropdown and logs the decision. Reject keeps the owner's choice, and Add task uses it. The unrecognised-title warning appears. The schedule still generates after an approval. | 5 | 5 |
+
+**Full suite (latest local run, Python 3.14.2, pytest 9.2.0, Streamlit 1.67.0, project `.venv`):** `297 passed, 3 xfailed`. That is 38 original + 225 scheduler reliability + 34 AI tests passing, plus the 3 known scheduler gaps. The result was the same on four repeated runs.
+
+```bash
+source .venv/bin/activate
+python -m pawpilot_ml                                   # print the model evaluation
+python -m pytest tests/test_priority_recommender.py tests/test_app_priority_suggestion.py -v   # AI tests only
+python -m pytest -q                                     # everything
+```
+
+### Limitations
+
+- **It learns my labels, not ground truth.** Accuracy measures agreement with the hand-written labelling rules in `data/README.md`, not real pet-care urgency.
+- **Small dataset.** With 120 examples, a single word can dominate. "Treat" is learned mostly from snack examples, so "Treat hot spot" is ranked low.
+- **Confidently wrong is possible.** The hot-spot example scores 80% confidence while being wrong. Confidence comes from the model, not from real-world certainty.
+- **Dogs and cats dominate the data.** "Other" pets have few examples, and only English titles are covered.
+- **Bag of words.** Word order and negation are ignored ("no medication needed" still contains "medication").
+- **Scope.** It only suggests priority. It does not schedule, resolve conflicts, or give veterinary advice. The planned AI scheduling agent and AI conflict review are still not implemented.
+- **Testing notes.** The app tests use Streamlit's testing tool, not a real browser. During development, one manual `AppTest` run timed out after 30 seconds while adding a pet. I could not reproduce it in later runs and don't know the cause. The app also uses `use_container_width`, which Streamlit 1.67 reports as deprecated. This was already the case before this change.
 
 ## Project Reflection
 Developing PawPal+ taught me the importance of breaking complex problems into smaller, manageable components. By separating scheduling logic from the user interface and writing automated tests, I learned how to build a system that is easier to understand, maintain, and improve.

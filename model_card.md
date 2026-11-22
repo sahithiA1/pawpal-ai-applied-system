@@ -14,13 +14,14 @@ I want to be clear about where the project stands today:
 | Conflict detection for overlapping timed tasks | ✅ Implemented and tested | `pawpal_system.py` |
 | Daily and weekly recurring tasks | ✅ Implemented and tested | `pawpal_system.py` |
 | Time validation, sorting, filtering, plan explanations | ✅ Implemented and tested | `pawpal_system.py` |
-| Streamlit interface | ✅ Implemented, checked manually and with `AppTest` during development (no saved UI tests) | `app.py` |
-| AI scheduling recommendations | ⏳ Planned, not implemented | — |
+| Streamlit interface | ✅ Implemented. Only the priority-suggestion flow has saved `AppTest` tests | `app.py` |
+| **ML task-priority recommender** (Naive Bayes, standard library only) | ✅ Implemented and tested | `pawpilot_ml.py`, `data/priority_training_data.csv` |
+| Owner approval / rejection of priority suggestions | ✅ Implemented and tested | `app.py`, `review_recommendation()` in `pawpilot_ml.py` |
+| Logging of priority decisions (current session only) | ✅ Implemented | `app.py` ("Suggestion history") |
+| AI scheduling recommendations (whole schedules) | ⏳ Planned, not implemented | — |
 | AI conflict review of proposed schedules | ⏳ Planned, not implemented | — |
-| Owner approval / rejection of AI suggestions | ⏳ Planned, not implemented | — |
-| Decision logging | ⏳ Planned, not implemented | — |
 
-**There is currently no AI model inside PawPilot AI.** The scheduler is rule-based: it sorts tasks by priority, preferred category, and preferred time, then adds them one at a time until the owner runs out of minutes. Everything in this card about reliability refers to that rule-based scheduler. The architecture diagram in the README shows the planned AI workflow, not working code.
+**The only AI model in PawPilot AI is the priority recommender.** It is a small multinomial Naive Bayes classifier trained on 120 synthetic, hand-written example tasks. It suggests `low`, `medium`, or `high` priority for a new task, with a confidence and its main reasons, and the owner approves or rejects each suggestion. The scheduler itself is still rule-based: it sorts tasks by priority, preferred category, and preferred time, then adds them one at a time until the owner runs out of minutes. The architecture diagram in the README still shows planned AI parts that are not built.
 
 ## Intended Use
 
@@ -35,12 +36,16 @@ It is **not** meant to:
 
 ## Evaluation Results
 
+**Full suite, latest local run (Python 3.14.2, pytest 9.2.0, Streamlit 1.67.0, project `.venv`): 297 passed, 3 expected failures (xfail), 0 unexpected failures.** That is 263 scheduler tests plus 34 AI tests, all passing, plus the 3 known scheduler gaps.
+
+### Scheduler evaluation
+
 I evaluated the existing scheduler with two test files:
 
 - `tests/test_pawpal.py`: the 38 original PawPal+ backend tests.
 - `tests/test_reliability.py`: 228 scenario-level reliability tests covering valid schedules, time limits, overlapping tasks, invalid input, and empty task lists. 200 of these are randomized scenarios with fixed seeds, so every run checks the same inputs.
 
-**Latest local run (Python 3.14.2, pytest 9.2.0, project `.venv`): 263 passed, 3 expected failures (xfail), 0 unexpected failures.**
+**Scheduler tests: 263 passed, 3 expected failures (xfail), 0 unexpected failures.**
 
 | Category | Tests | Passed | Expected failures |
 |---|---:|---:|---:|
@@ -52,14 +57,27 @@ I evaluated the existing scheduler with two test files:
 | Empty task lists | 4 | 4 | 0 |
 | **Total** | **266** | **263** | **3** |
 
-None of these tests evaluate AI behaviour, because there is no AI behaviour to evaluate yet. I am not counting the 38 original tests or the new reliability tests as AI tests.
+None of these tests evaluate AI behaviour. I am not counting the 38 original tests or the scheduler reliability tests as AI tests.
+
+### Priority recommender evaluation (AI)
+
+| Measure | Result |
+|---|---|
+| Held-out test set (fixed stratified split, seed 110: 90 train / 30 test) | 23/30 correct = **76.7%** |
+| Majority-class baseline on the same split | 33.3% |
+| Leave-one-out accuracy (all 120 examples) | 82/120 = **68.3%** |
+| `tests/test_priority_recommender.py` (data, training, prediction, invalid input, approve/reject, scheduler hand-off) | 29/29 passed |
+| `tests/test_app_priority_suggestion.py` (Streamlit `AppTest`: approve, reject, warning, schedule still generates) | 5/5 passed |
+
+The accuracy numbers measure agreement with my own hand-written labels, not real pet-care urgency. The 7 held-out mistakes included two health tasks ranked too low: *Monitor breathing after surgery* (labelled high, predicted medium) and *Treat hot spot* (labelled high, predicted low).
 
 To reproduce:
 
 ```bash
 source .venv/bin/activate
 python -m pytest -q                                   # full suite
-python -m pytest tests/test_reliability.py -q -rxX    # evaluation only, listing the 3 known gaps
+python -m pytest tests/test_reliability.py -q -rxX    # scheduler evaluation only, listing the 3 known gaps
+python -m pawpilot_ml                                 # recommender accuracy and confusion matrix
 ```
 
 ### The three issues the evaluation found
@@ -67,7 +85,7 @@ python -m pytest tests/test_reliability.py -q -rxX    # evaluation only, listing
 The three expected failures are real weaknesses in the scheduler. I recorded them with `xfail(strict=True)` so they stay visible in every test run instead of being hidden. If one of them is fixed, pytest will report it and I will know to update the tests and documentation.
 
 1. **Negative durations break the time limit.** A task like `Task("Bogus", -10)` is accepted. When the scheduler builds the plan, the −10 minutes are added back to the remaining time. In my test, that let a 65-minute walk into a 60-minute day. This is the most serious of the three, because staying within the owner's available time is the scheduler's main promise.
-2. **Unknown priorities are silently treated as "medium".** If a priority is mistyped, for example `"urgent"`, the task is ranked as medium priority with no warning. In the Streamlit app the priority comes from a dropdown, so this mostly affects code that creates tasks directly. It would matter a lot once an AI is producing task data.
+2. **Unknown priorities are silently treated as "medium".** If a priority is mistyped, for example `"urgent"`, the task is ranked as medium priority with no warning. In the Streamlit app the priority comes from a dropdown, so this mostly affects code that creates tasks directly. The priority recommender only ever outputs `low`, `medium`, or `high`, and `review_recommendation()` rejects any other value for the owner's current choice. But the scheduler itself still doesn't check.
 3. **Conflicts that cross midnight are not detected.** A task at 23:30 that lasts an hour does not conflict with a 00:00 task on the next day, because conflict checks only compare tasks on the same date.
 
 ## Limitations and Biases
@@ -78,7 +96,7 @@ The three expected failures are real weaknesses in the scheduler. I recorded the
 - **Input validation is incomplete.** Times are validated, but durations and priorities are not (see the issues above). A non-numeric duration is not rejected when the task is created and only causes a `TypeError` later, when the plan is built.
 - **Single-day view.** `sort_by_time()` sorts by clock time only and ignores the due date, and conflict detection does not look across midnight.
 - **No persistence.** Pets and tasks live in Streamlit's session state and are lost when the page is refreshed.
-- **No saved UI tests.** The Streamlit app was checked with `AppTest` and by hand during development, but those checks are not part of the automated suite.
+- **Few saved UI tests.** Only the priority-suggestion flow has saved `AppTest` tests. The rest of the app was checked with `AppTest` and by hand during development, but those checks are not part of the automated suite.
 - **Testing depends on the current date.** Tasks default to today's date, so tests run against whatever day it is. I don't know of any test that depends on a specific date.
 
 ### Biases built into the design
@@ -90,11 +108,18 @@ The scheduler doesn't learn from data, but it still makes value judgments that f
 - **Unknown values fall back to "medium" and "any".** This hides mistakes instead of surfacing them.
 - **Designed around a typical household.** The design assumes one owner, a handful of pets, and a few tasks a day. I have not tested larger households, multiple caregivers, or care routines for less common animals.
 
-### Risks I expect once AI is added
+### Limitations and biases of the priority recommender
 
-These are not results. They are risks I plan to test for once the AI features exist:
+- **It learns my labels.** The training data is 120 synthetic examples I labelled with simple rules (documented in `data/README.md`). The model copies those judgments, including any I got wrong, and its accuracy only measures agreement with them.
+- **Dogs and cats dominate.** Most examples are for dogs and cats. "Other" pets such as rabbits, fish, birds, and reptiles have far fewer, so suggestions for them rest on less evidence.
+- **Single words can mislead it.** It treats a title as a bag of words. "Treat" appears mostly in snack examples ("Give a treat"), so "Treat hot spot on paw" was suggested as `low` with 80% confidence. It also ignores word order and negation.
+- **It can be confidently wrong.** Confidence is the model's own probability, not real-world certainty, as the hot-spot example shows.
+- **English, short titles only.** Other languages, long descriptions, and misspellings are not covered.
 
-- An AI model may know more about common pets such as dogs and cats than about less common animals, and may give less useful suggestions for them.
+### Risks for the AI features that are still planned
+
+These are not results. They are risks I plan to test for if I build the AI scheduling agent:
+
 - An AI could suggest invalid task data, such as an unknown priority, a negative duration, or an impossible time. The issues above show that the current scheduler would not catch all of that.
 - AI suggestions could sound confident about care decisions that really belong to a veterinarian.
 
@@ -105,14 +130,16 @@ What is in place today:
 - **Time validation.** Tasks with malformed times such as `"8am"`, `"25:99"`, or `"08:00pm"` are rejected when they are created, so they never reach the plan.
 - **Conflict warnings instead of silent changes.** The scheduler reports overlapping tasks but does not move them. The owner decides how to fix a conflict.
 - **Plan explanations.** `explain_plan()` says why each task was scheduled or skipped, so the owner can see and question the reasoning.
-- **No external data sharing.** Nothing is sent to an outside service. Data stays in the local Streamlit session.
+- **No external data sharing.** Nothing is sent to an outside service. The priority recommender runs locally with no API. Data stays in the local Streamlit session.
+- **Owner approval for priority suggestions.** The recommender never changes a task. Its suggestion only takes effect when the owner clicks **Approve**, and **Reject** keeps the owner's choice. Both are tested, in the app and at the code level.
+- **Warnings and scope notes.** The app warns when none of the title words were seen in training or confidence is below 60%. It also says the suggestion comes from a small model trained on synthetic examples and is not veterinary advice.
+- **Input checks in the recommender.** It rejects zero, negative, and non-integer durations, refuses to predict before training, and only trains on `low`/`medium`/`high` labels.
+- **Decision history.** Each approve/reject decision is listed in the app for the current session, so the owner can see what the model suggested and what was used.
 
-What I plan to add with the AI features:
+What I plan to add with future AI features:
 
-- **Owner approval before any change.** AI suggestions will be shown as proposals, and nothing will be saved until the owner approves it.
 - **Validate AI output with the existing rules.** Every AI-proposed schedule should pass the same checks as the scheduler (time budget, conflicts, valid times), plus the duration and priority validation that is currently missing.
-- **Clear scope messaging.** The app should say that it is a scheduling helper and not a source of veterinary or medication advice.
-- **Fix the three known issues first.** Before an AI generates task data, I want negative durations and unknown priorities to be rejected. Otherwise an AI mistake could quietly break the plan.
+- **Fix the three known issues first.** Before an AI generates whole tasks or schedules, I want the scheduler to reject negative durations and unknown priorities. Otherwise an AI mistake could quietly break the plan.
 
 ## Reliability Surprises
 

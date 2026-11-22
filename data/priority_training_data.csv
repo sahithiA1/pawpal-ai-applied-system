@@ -1,0 +1,121 @@
+title,category,duration_minutes,species,preferred_time,priority
+Give heartworm pill,meds,5,dog,morning,high
+Thyroid medication,meds,5,cat,morning,high
+Insulin injection,meds,5,cat,morning,high
+Evening insulin shot,meds,5,dog,evening,high
+Seizure medication,meds,5,dog,morning,high
+Antibiotic dose,meds,5,dog,evening,high
+Pain medication after surgery,meds,5,dog,morning,high
+Eye drops for infection,meds,5,cat,evening,high
+Ear drops for infection,meds,10,dog,morning,high
+Clean surgical wound,other,10,dog,morning,high
+Change bandage,other,15,cat,evening,high
+Vet appointment,other,60,dog,afternoon,high
+Vet checkup for limping,other,45,dog,morning,high
+Emergency vet visit,other,90,cat,any,high
+Breakfast,feeding,10,dog,morning,high
+Dinner,feeding,10,cat,evening,high
+Morning feeding,feeding,10,cat,morning,high
+Evening meal,feeding,10,dog,evening,high
+Feed hay and pellets,feeding,10,other,morning,high
+Refill fresh water,feeding,5,dog,any,high
+Fresh water for rabbit,feeding,5,other,morning,high
+Feed puppy lunch,feeding,10,dog,afternoon,high
+Kitten feeding,feeding,10,cat,afternoon,high
+Prescription diet meal,feeding,10,cat,evening,high
+Potty break,walk,10,dog,morning,high
+Puppy potty break,walk,5,dog,afternoon,high
+Late night potty break,walk,10,dog,evening,high
+Give fish food,feeding,5,other,morning,high
+Feed bearded dragon insects,feeding,10,other,afternoon,high
+Check heat lamp,other,5,other,morning,high
+Blood sugar check,meds,10,cat,morning,high
+Inhaler for asthma,meds,5,cat,any,high
+Monitor breathing after surgery,other,15,dog,evening,high
+Remove tick,grooming,10,dog,any,high
+Clean infected ear,grooming,10,dog,morning,high
+Treat hot spot,grooming,10,dog,any,high
+Fluids injection for kidneys,meds,15,cat,evening,high
+Give anxiety medication before storm,meds,5,dog,afternoon,high
+Feed senior dog soft food,feeding,15,dog,morning,high
+Hand feed sick kitten,feeding,20,cat,any,high
+Morning walk,walk,30,dog,morning,medium
+Evening walk,walk,30,dog,evening,medium
+Afternoon walk,walk,20,dog,afternoon,medium
+Long hike,walk,90,dog,morning,medium
+Jog in the park,walk,45,dog,morning,medium
+Walk around the block,walk,15,dog,evening,medium
+Leash training walk,walk,20,dog,afternoon,medium
+Clean litter box,other,10,cat,morning,medium
+Scoop litter,other,5,cat,evening,medium
+Clean rabbit cage,other,30,other,afternoon,medium
+Change aquarium water,other,30,other,afternoon,medium
+Clean hamster cage,other,20,other,any,medium
+Obedience training,other,20,dog,afternoon,medium
+Clicker training session,other,15,dog,any,medium
+Crate training practice,other,15,dog,evening,medium
+Play fetch,other,20,dog,afternoon,medium
+Laser pointer play,other,15,cat,evening,medium
+Wand toy play session,other,15,cat,evening,medium
+Brush teeth,grooming,5,dog,evening,medium
+Brush cat teeth,grooming,5,cat,evening,medium
+Monthly flea prevention,meds,5,dog,any,medium
+Give joint supplement,meds,5,dog,morning,medium
+Fish oil supplement,meds,5,cat,morning,medium
+Probiotic powder,meds,5,dog,morning,medium
+Weigh pet,other,5,cat,any,medium
+Check weight log,other,5,dog,any,medium
+Wash food bowls,feeding,10,dog,evening,medium
+Measure out tomorrow's food,feeding,10,cat,evening,medium
+Prepare raw food portions,feeding,30,dog,afternoon,medium
+Refill hay rack,feeding,5,other,evening,medium
+Socialization at dog park,walk,45,dog,afternoon,medium
+Swim exercise,walk,30,dog,afternoon,medium
+Supervised outdoor time,walk,20,cat,afternoon,medium
+Harness walk for cat,walk,15,cat,afternoon,medium
+Spot clean enclosure,other,10,other,evening,medium
+Wash pet bedding,other,30,dog,any,medium
+Brush long-haired cat,grooming,15,cat,evening,medium
+Check paws after walk,grooming,5,dog,evening,medium
+Clean ears routine,grooming,10,dog,any,medium
+Refill bird seed,feeding,5,other,morning,medium
+Bath,grooming,30,dog,afternoon,low
+Bath and brush,grooming,45,dog,afternoon,low
+Nail trim,grooming,15,dog,afternoon,low
+Trim cat claws,grooming,10,cat,any,low
+Brush coat,grooming,15,dog,any,low
+Comb out fur,grooming,15,cat,evening,low
+Fur trim around eyes,grooming,15,dog,any,low
+Apply paw balm,grooming,5,dog,evening,low
+Photo shoot,other,30,dog,afternoon,low
+Take pet photos,other,15,cat,any,low
+Buy new toys,other,30,dog,any,low
+Rotate toys,other,5,cat,any,low
+Puzzle feeder,feeding,15,dog,afternoon,low
+Treat puzzle,feeding,10,cat,any,low
+Bake dog treats,feeding,60,dog,afternoon,low
+Give a treat,feeding,5,dog,any,low
+Catnip time,other,10,cat,evening,low
+Bird watching at window,other,20,cat,morning,low
+Set up new cat tree,other,45,cat,any,low
+Teach a new trick,other,15,dog,evening,low
+Learn to high five,other,10,dog,any,low
+Dog playdate,other,60,dog,afternoon,low
+Visit pet store,other,45,dog,afternoon,low
+Organize pet supplies,other,20,dog,any,low
+Decorate aquarium,other,30,other,any,low
+Sing to the bird,other,10,other,any,low
+Cuddle time,other,15,cat,evening,low
+Brush rabbit fur,grooming,10,other,any,low
+Sunbathe on the patio,other,20,other,afternoon,low
+Massage,grooming,10,dog,evening,low
+Deshedding treatment,grooming,30,dog,afternoon,low
+Teeth cleaning chew,feeding,5,dog,any,low
+Leisurely stroll to a cafe,walk,40,dog,afternoon,low
+Scenic drive,other,60,dog,any,low
+Agility practice for fun,other,30,dog,afternoon,low
+Paint with pet,other,30,dog,any,low
+Plan birthday party,other,30,dog,any,low
+Update pet social media,other,10,cat,any,low
+Fancy bow grooming,grooming,20,dog,any,low
+Try new shampoo,grooming,20,dog,any,low

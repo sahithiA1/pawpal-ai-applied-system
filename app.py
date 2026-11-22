@@ -3,8 +3,33 @@ from datetime import time
 import streamlit as st
 
 from pawpal_system import Owner, Pet, Scheduler, Task
+from pawpilot_ml import TaskExample, review_recommendation, train_default_recommender
 
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
+
+
+@st.cache_resource
+def get_priority_recommender():
+    """Train the PawPilot AI priority recommender once and reuse it across reruns."""
+    return train_default_recommender()
+
+
+def record_priority_decision(approved: bool, task_title: str, recommendation) -> None:
+    """Button callback: apply the owner's approve/reject decision and log it."""
+    decision = review_recommendation(
+        task_title, recommendation, st.session_state.task_priority, approved
+    )
+    st.session_state.task_priority = decision.final_priority
+    st.session_state.priority_decisions.append(decision)
+    if approved:
+        st.session_state.priority_feedback = (
+            f"Approved: priority set to {decision.final_priority}."
+        )
+    else:
+        st.session_state.priority_feedback = (
+            f"Rejected: kept your choice ({decision.final_priority})."
+        )
+
 
 st.title("🐾 PawPal+")
 st.caption(
@@ -65,7 +90,9 @@ with col1:
 with col2:
     duration = st.number_input("Duration (minutes)", min_value=1, max_value=240, value=20)
 with col3:
-    priority = st.selectbox("Priority", ["low", "medium", "high"], index=2)
+    # Keyed so an approved AI suggestion can update it; defaults to "high" as before
+    st.session_state.setdefault("task_priority", "high")
+    priority = st.selectbox("Priority", ["low", "medium", "high"], key="task_priority")
 
 col4, col5, col6 = st.columns(3)
 with col4:
@@ -86,6 +113,70 @@ with time_col2:
     scheduled_time = st.time_input(
         "Scheduled time", value=time(8, 0), step=300, disabled=not has_time, key="task_time"
     )
+
+st.markdown("#### 🤖 PawPilot AI priority suggestion")
+st.session_state.setdefault("priority_decisions", [])
+suggestion_pet = next((p for p in owner.pets if p.name == task_pet_name), None)
+recommendation = get_priority_recommender().recommend(
+    TaskExample(
+        title=task_title,
+        category=category,
+        duration_minutes=int(duration),
+        species=suggestion_pet.species if suggestion_pet else "other",
+        preferred_time=preferred_time,
+    )
+)
+reasons = ", ".join(recommendation.reasons) or "the overall mix of training examples"
+st.info(
+    f"Suggested priority: **{recommendation.priority}** "
+    f"({recommendation.confidence:.0%} confident). Mainly based on {reasons}."
+)
+if recommendation.title_unrecognized:
+    st.warning(
+        "None of the words in this title appear in the training examples, so this suggestion "
+        "only uses the category, species, time, and duration. Check it carefully.",
+        icon="⚠️",
+    )
+elif recommendation.low_confidence:
+    st.warning("The model is not very confident about this suggestion.", icon="⚠️")
+st.caption(
+    "This is a suggestion from a small model trained on synthetic examples, not veterinary "
+    "advice. Nothing changes unless you approve it."
+)
+
+approve_col, reject_col = st.columns(2)
+approve_col.button(
+    f"Approve ({recommendation.priority})",
+    key="approve_priority",
+    on_click=record_priority_decision,
+    args=(True, task_title, recommendation),
+)
+reject_col.button(
+    "Reject (keep my choice)",
+    key="reject_priority",
+    on_click=record_priority_decision,
+    args=(False, task_title, recommendation),
+)
+if "priority_feedback" in st.session_state:
+    st.success(st.session_state.pop("priority_feedback"))
+
+if st.session_state.priority_decisions:
+    with st.expander("Suggestion history"):
+        st.dataframe(
+            [
+                {
+                    "Task": d.task_title,
+                    "Suggested": d.suggested_priority,
+                    "Confidence": f"{d.confidence:.0%}",
+                    "Your previous choice": d.previous_priority,
+                    "Decision": "Approved" if d.approved else "Rejected",
+                    "Priority used": d.final_priority,
+                }
+                for d in st.session_state.priority_decisions
+            ],
+            hide_index=True,
+            use_container_width=True,
+        )
 
 if st.button("Add task"):
     task_pet = next((p for p in owner.pets if p.name == task_pet_name), None)
