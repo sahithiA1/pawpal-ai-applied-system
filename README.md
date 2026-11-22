@@ -341,3 +341,11 @@ This walkthrough follows one owner from adding a pet to completing a recurring t
 10. **Check the results.** In All Tasks, set **Status** to Completed to see today's walk, then Pending to see tomorrow's new walk. In the schedule, the walk is gone from today's plan, so the conflict warning is replaced by "No scheduling conflicts detected."
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+
+## PawPal AI System Architecture
+
+The diagram below illustrates the proposed PawPal AI workflow, including pet data retrieval, AI scheduling, conflict detection, human approval, and reliability testing.
+
+![PawPal AI System Architecture](assets/architecture.png)
+
+The editable Mermaid source is available in [diagrams/architecture.mmd](diagrams/architecture.mmd).

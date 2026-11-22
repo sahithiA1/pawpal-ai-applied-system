@@ -1,0 +1,21 @@
+flowchart TD
+    A["Pet Owner"] --> B["PawPal AI Application"]
+    B --> C["Input Validation"]
+    C --> D["Pet Data Retriever"]
+    E["Pet Profiles and Existing Tasks"] --> D
+    F["Pet Care Knowledge Base"] --> D
+    D --> G["AI Scheduling Agent"]
+    G --> H["Schedule Evaluator"]
+    H --> I{"Conflicts or Errors?"}
+    I -->|Yes| J["Revise Schedule"]
+    J --> G
+    I -->|No| K["Human Review"]
+    K --> L{"Owner Approves?"}
+    L -->|No| M["Reject or Request Changes"]
+    M --> G
+    L -->|Yes| N["Save Approved Schedule"]
+    N --> O["Display Final Schedule"]
+    G --> P["Decision Logs"]
+    H --> P
+    Q["Reliability Tests"] --> G
+    Q --> H
