@@ -530,6 +530,75 @@ The PawPilot AI extension will build on these lessons by evaluating how AI-gener
 
 **Testing status:** The 38 existing backend tests pass. AI-specific functionality and reliability tests are still pending implementation.
 
+## Reliability Evaluation
+
+> **Scope: this evaluates the existing rule-based PawPal+ scheduler (`pawpal_system.py`) only. It is not an AI evaluation.** PawPilot AI's AI features (AI recommendations, AI conflict review, owner approval of AI suggestions) are not implemented yet, so there are no AI results to report.
+
+### Scheduler reliability vs. AI reliability
+
+| | Existing scheduler (rule-based) | PawPilot AI features |
+|---|---|---|
+| Implemented? | Yes, in `pawpal_system.py` | No, only planned (see architecture diagram) |
+| Reliability tests | `tests/test_pawpal.py` (38 original tests) and `tests/test_reliability.py` (228 new tests) | None |
+| Results | 263 passed, 3 known gaps (xfail), 0 unexpected failures | Not evaluated, nothing to test yet |
+
+### Evaluation results (`tests/test_reliability.py`)
+
+The evaluation runs scenario-level checks on realistic multi-pet days. Known weaknesses are recorded as **strict expected failures** (`xfail(strict=True)`). They are reported as "xfailed" and do not break the run. If one of them is ever fixed, pytest reports it as a failure (XPASS) so this table has to be updated.
+
+| Category | What is checked | Tests | Passed | Known gaps (xfail) | Status |
+|---|---|---:|---:|---:|---|
+| Valid schedules | Realistic two-pet day is fully scheduled in time order with no conflicts. Rebuilding the plan is deterministic. The explanation covers every task. **200 seeded random scenarios** check that the budget is never exceeded, each task is scheduled or skipped exactly once, and skips are justified. | 203 | 203 | 0 | ✅ Pass |
+| Time limits | Being one minute short drops only a low-priority task. A task longer than the whole budget is skipped with a reason. A 24-hour budget fits everything. A negative budget schedules nothing. Duplicate tasks are not counted twice. | 5 | 5 | 0 | ✅ Pass |
+| Overlapping tasks | A three-way overlap gives 3 pairwise warnings. Cross-pet clashes appear in the explanation. Skipped tasks are not flagged. Back-to-back tasks don't conflict. A task crossing midnight is detected. | 5 | 4 | 1 | ⚠️ Pass with known gap |
+| Invalid input | Malformed times (`" 08:00"`, `"08:00pm"`, `"08-00"`, `"-1:00"`, `"8"`) are rejected and `""` is allowed. A rejected task leaves the plan unchanged. Duplicate pet names are rejected. Removing an unknown pet or task raises an error. Negative durations and unknown priorities are rejected. | 11 | 9 | 2 | ⚠️ Pass with known gaps |
+| Empty task lists | Pets with no tasks, all tasks completed, only future tasks, and filtering/sorting empty lists all give empty results without errors. | 4 | 4 | 0 | ✅ Pass |
+| **Total (new evaluation)** | | **228** | **225** | **3** | **0 unexpected failures** |
+
+**Full suite (latest local run, Python 3.14.2, pytest 9.2.0, project `.venv`):**
+
+```text
+$ python -m pytest -q
+263 passed, 3 xfailed in 0.60s
+```
+
+These 263 passing tests are the 38 original backend tests plus the 225 passing evaluation tests. None of them test AI behaviour.
+
+### Known gaps found by the evaluation
+
+| Gap | Observed behaviour | Impact |
+|---|---|---|
+| Negative durations accepted | `Task("Bogus", -10)` is accepted. Its −10 minutes are added back to the budget, so a 65-minute task gets scheduled in a 60-minute day. | The time-limit guarantee can be broken by bad input. |
+| Unknown priorities accepted | `priority="urgent"` (or a typo) is silently ranked as `medium`. | Tasks can be ranked lower than the owner intended, with no warning. |
+| Midnight crossing not checked | A 23:30 task lasting 60 minutes does not conflict with a 00:00 task the next day. | Overnight clashes are missed. |
+
+### How to reproduce
+
+From the project folder, with the project's virtual environment (pytest is installed there, not in the system Python):
+
+```bash
+source .venv/bin/activate
+
+# Full suite: original 38 tests + reliability evaluation
+python -m pytest -q
+
+# Reliability evaluation only, listing the known gaps
+python -m pytest tests/test_reliability.py -q -rxX
+
+# One category at a time, for example overlapping tasks
+python -m pytest tests/test_reliability.py -v -k "three_way or across_pets or skipped_task_is_not or back_to_back_tasks_across or midnight"
+```
+
+The 200 random scenarios use fixed seeds (`random.Random(seed)` for seeds 0–199), so every run checks the same inputs.
+
+### Limitations of this evaluation
+
+- **No AI is evaluated.** None of these results say anything about how reliable PawPilot AI's planned AI recommendations will be. AI reliability tests will be added once that functionality exists.
+- **Backend only.** The Streamlit app (`app.py`) is not covered by automated tests. Its input widgets already block some invalid values (for example duration ≥ 1), but nothing tests that automatically.
+- **Results depend on today's date.** Tasks default to `date.today()`, so results could in principle differ on a different day or across midnight. No test is known to depend on the specific date.
+- **Not covered:** non-integer durations (a string duration raises `TypeError` while the plan is being built, not when the task is created) and `time=None` (accepted at creation). Both were seen during manual checks but are not part of the test suite.
+- **Random scenarios check rules, not quality.** They confirm the scheduler's rules always hold, not that the plan is the best possible one. The scheduler is greedy by priority, so it can leave time unused that a different choice of tasks would have filled.
+
 ## Project Reflection
 Developing PawPal+ taught me the importance of breaking complex problems into smaller, manageable components. By separating scheduling logic from the user interface and writing automated tests, I learned how to build a system that is easier to understand, maintain, and improve.
 
